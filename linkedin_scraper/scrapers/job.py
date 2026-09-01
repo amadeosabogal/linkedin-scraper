@@ -100,14 +100,43 @@ class JobScraper(BaseScraper):
         return job
     
     async def _get_job_title(self) -> Optional[str]:
-        """Extract job title from h1 heading."""
+        """Extract job title from h1 heading or page title."""
+        selectors = [
+            "h1.job-details-jobs-unified-top-card__job-title",
+            "h1.top-card-layout__title",
+            "h1.topcard__title",
+            "h1.t-24",
+            "h1",
+            "h2.top-card-layout__title"
+        ]
+        for sel in selectors:
+            try:
+                title_elem = self.page.locator(sel).first
+                if await title_elem.count() > 0:
+                    title = await title_elem.inner_text()
+                    title = title.strip()
+                    if title and "LinkedIn" not in title and len(title) > 2:
+                        return title
+            except:
+                continue
+
+        # Fallback to page title
         try:
-            title_elem = self.page.locator('h1').first
-            await title_elem.wait_for(timeout=5000)
-            title = await title_elem.inner_text()
-            return title.strip()
+            page_title = await self.page.title()
+            if page_title and "hiring" in page_title.lower():
+                # Format: "Company hiring Title in Location | LinkedIn"
+                after_hiring = page_title.split("hiring", 1)[1]
+                job_part = after_hiring.split(" in ")[0].strip() if " in " in after_hiring else after_hiring.split("|")[0].strip()
+                if job_part:
+                    return job_part
+            elif page_title and "|" in page_title:
+                clean = page_title.split("|")[0].strip()
+                if clean and clean != "LinkedIn":
+                    return clean
         except:
-            return None
+            pass
+
+        return "Puesto de empleo"
     
     async def _get_company(self) -> Optional[str]:
         """Extract company name from company link."""

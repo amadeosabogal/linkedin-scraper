@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Lead Hunter & Matcher</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-mark">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+            <rect x="2" y="9" width="4" height="12"></rect>
+            <circle cx="4" cy="4" r="2"></circle>
+          </svg>
+        </div>
+        <div>
+          <h1 class="logo-title">LeadHunter</h1>
+          <span class="logo-subtitle">LinkedIn Discovery & Matcher</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="leads-tab">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Leads & Directores B2B</span>
+        </button>
+
+        <button class="nav-item" data-tab="jobs-tab">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+          <span>Buscador de Empleo</span>
+        </button>
+
+        <button class="nav-item" data-tab="companies-tab">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M8 10h.01"></path><path d="M16 10h.01"></path><path d="M8 14h.01"></path><path d="M16 14h.01"></path></svg>
+          <span>Empresas & Señales</span>
+        </button>
+
+        <button class="nav-item" data-tab="inspector-tab">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span>Inspector de Enlace</span>
+        </button>
+
+        <div class="nav-divider"></div>
+
+        <button class="nav-item" data-tab="crm-tab">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+          <span>CRM / Leads Guardados</span>
+          <span class="badge-count" id="crmCount">0</span>
+        </button>
+
+        <button class="nav-item" data-tab="session-tab">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>Estado de Sesión</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="session-pill" id="globalSessionIndicator">
+          <span class="status-dot"></span>
+          <span class="session-label">Verificando sesión...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="page-title-group">
+          <h2 id="currentTabTitle">Leads & Directores B2B</h2>
+          <p id="currentTabSubtitle">Encuentra tomadores de decisión y evalúa su afinidad según tu producto o perfil</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary btn-sm" id="btnRefreshSession">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span>Sesión</span>
+          </button>
+          <a href="/api/export/csv" class="btn btn-secondary btn-sm" id="btnExportCSV">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            <span>Exportar CSV</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Task Progress Banner (Hidden by default) -->
+      <div class="task-banner" id="taskBanner" style="display: none;">
+        <div class="task-info">
+          <span class="pulse-indicator"></span>
+          <span class="task-text" id="taskStatusText">Iniciando búsqueda...</span>
+          <span class="task-pct" id="taskPct">0%</span>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnStopTask" style="margin-left: 12px; color: #f87171; border-color: rgba(239,68,68,0.3); padding: 2px 8px;">⏹ Detener</button>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="tab-content-container">
+
+        <!-- TAB 1: B2B LEADS -->
+        <section class="tab-pane active" id="leads-tab">
+          <div class="card search-card">
+            <form id="formSearchLeads" class="clean-form">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Cargo / Rol Objetivo</label>
+                  <input type="text" id="leadTitle" class="form-input" placeholder="Ej: Gerente de Ventas, CTO, Director TI, Founder" value="Gerente de Ventas">
+                </div>
+                <div class="form-group">
+                  <label>Ubicación / País</label>
+                  <input type="text" id="leadLocation" class="form-input" placeholder="Ej: Mexico, Colombia, Lima, Remote" value="Mexico">
+                </div>
+                <div class="form-group">
+                  <label>Cantidad de Perfiles</label>
+                  <select id="leadLimit" class="form-select">
+                    <option value="1">1 perfil (Prueba inmediata)</option>
+                    <option value="3">3 perfiles</option>
+                    <option value="5" selected>5 perfiles</option>
+                    <option value="10">10 perfiles</option>
+                    <option value="25">25 perfiles</option>
+                    <option value="50">50 perfiles</option>
+                    <option value="100">100 perfiles</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Matching Criteria Expandable -->
+              <div class="criteria-box">
+                <div class="criteria-header">
+                  <span class="criteria-title">🎯 Criterios para el % de Afinidad (Lead Fit)</span>
+                  <span class="criteria-hint">Ajusta qué buscas para que el cálculo sea preciso</span>
+                </div>
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label>Palabras clave de tu producto o dolor (separadas por coma)</label>
+                    <input type="text" id="leadKeywords" class="form-input" placeholder="Ej: SaaS, CRM, Logística, B2B, Inteligencia Artificial" value="SaaS, CRM, B2B">
+                  </div>
+                  <div class="form-group">
+                    <label>Cargos prioritarios que toman la decisión</label>
+                    <input type="text" id="leadTargetRoles" class="form-input" placeholder="Ej: Director Comercial, VP Sales, Gerente General" value="Director, Gerente, VP">
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin: 12px 0; padding: 0 16px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); cursor: pointer;">
+                  <input type="checkbox" id="leadRequireEmail" style="width: 16px; height: 16px;">
+                  <span>Requerir correo en Info de Contacto</span>
+                </label>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btnSubmitLeads">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <span>Buscar & Calificar Leads</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Leads Results -->
+          <div class="results-header">
+            <div class="results-title-group">
+              <span class="results-count" id="leadsResultsCount">0 resultados encontrados</span>
+            </div>
+            <div class="view-toggle">
+              <button class="btn-icon active" data-view="cards" title="Vista Tarjetas">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              </button>
+              <button class="btn-icon" data-view="table" title="Vista Tabla">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="cards-grid" id="leadsCardsContainer">
+            <div class="empty-state">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <h3>Sin búsquedas recientes</h3>
+              <p>Ingresa los criterios arriba y haz clic en "Buscar & Calificar Leads" para comenzar.</p>
+            </div>
+          </div>
+
+          <div class="table-wrapper" id="leadsTableWrapper" style="display: none;">
+            <table class="clean-table" id="leadsTable">
+              <thead>
+                <tr>
+                  <th>% Fit</th>
+                  <th>Nombre & Titular</th>
+                  <th>Empresa Actual</th>
+                  <th>Ubicación</th>
+                  <th>Coincidencias</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="leadsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- TAB 2: JOBS SEARCH -->
+        <section class="tab-pane" id="jobs-tab">
+          <div class="card search-card">
+            <form id="formSearchJobs" class="clean-form">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Puesto / Palabras clave</label>
+                  <input type="text" id="jobKeywords" class="form-input" placeholder="Ej: Python Developer, Data Engineer, Tech Lead" value="Python Developer">
+                </div>
+                <div class="form-group">
+                  <label>Ubicación / Modalidad</label>
+                  <input type="text" id="jobLocation" class="form-input" placeholder="Ej: Remote, Spain, Mexico, Estados Unidos" value="Remote">
+                </div>
+                <div class="form-group">
+                  <label>Límite de ofertas</label>
+                  <select id="jobLimit" class="form-select">
+                    <option value="1">1 oferta (Prueba inmediata)</option>
+                    <option value="3">3 ofertas</option>
+                    <option value="5" selected>5 ofertas</option>
+                    <option value="10">10 ofertas</option>
+                    <option value="25">25 ofertas</option>
+                    <option value="50">50 ofertas</option>
+                    <option value="100">100 ofertas</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="criteria-box">
+                <div class="criteria-header">
+                  <span class="criteria-title">📊 Criterios de Compatibilidad (% Match)</span>
+                  <span class="criteria-hint">Indica tus habilidades para ver tu porcentaje de compatibilidad</span>
+                </div>
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label>Tus habilidades técnicas (separadas por coma)</label>
+                    <input type="text" id="userSkills" class="form-input" placeholder="Ej: Python, FastAPI, React, Docker, AWS, PostgreSQL" value="Python, FastAPI, Docker, SQL">
+                  </div>
+                  <div class="form-group">
+                    <label>Títulos de puesto preferidos</label>
+                    <input type="text" id="desiredJobTitles" class="form-input" placeholder="Ej: Senior Python Developer, Backend Engineer" value="Backend Developer, Python Engineer">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btnSubmitJobs">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <span>Buscar & Calcular Match de Empleo</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="results-header">
+            <span class="results-count" id="jobsResultsCount">0 ofertas encontradas</span>
+          </div>
+
+          <div class="cards-grid" id="jobsCardsContainer">
+            <div class="empty-state">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+              <h3>Encuentra ofertas con % de afinidad</h3>
+              <p>Configura tus tecnologías y roles deseados para calcular la compatibilidad exacta.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: COMPANIES & POSTS SIGNALS -->
+        <section class="tab-pane" id="companies-tab">
+          <div class="card search-card">
+            <form id="formAnalyzeCompany" class="clean-form">
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label>URL de LinkedIn de la Empresa</label>
+                  <input type="url" id="companyUrlInput" class="form-input" placeholder="https://www.linkedin.com/company/microsoft/" required>
+                </div>
+                <div class="form-group">
+                  <label>Opciones de Análisis</label>
+                  <div class="checkbox-wrapper">
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="chkIncludePosts" checked>
+                      <span>Analizar publicaciones recientes para detectar señales de compra</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btnSubmitCompany">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                  <span>Analizar Empresa & Señales</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div id="companyResultContainer"></div>
+        </section>
+
+        <!-- TAB 4: DIRECT URL INSPECTOR -->
+        <section class="tab-pane" id="inspector-tab">
+          <div class="card search-card">
+            <form id="formInspectUrl" class="clean-form">
+              <div class="form-group">
+                <label>Pega cualquier enlace de LinkedIn (Perfil / Empleo / Empresa)</label>
+                <div class="input-with-button">
+                  <input type="url" id="inspectUrlInput" class="form-input" placeholder="https://www.linkedin.com/in/usuario/ o https://www.linkedin.com/jobs/view/..." required>
+                  <button type="submit" class="btn btn-primary" id="btnSubmitInspect">Inspeccionar</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div id="inspectResultContainer"></div>
+        </section>
+
+        <!-- TAB 5: CRM & SAVED LEADS -->
+        <section class="tab-pane" id="crm-tab">
+          <div class="crm-toolbar">
+            <div class="crm-filters">
+              <button class="filter-pill active" data-crm-filter="all">Todos (<span id="crmTotalPill">0</span>)</button>
+              <button class="filter-pill" data-crm-filter="Nuevo">Nuevo</button>
+              <button class="filter-pill" data-crm-filter="Contactado">Contactado</button>
+              <button class="filter-pill" data-crm-filter="En seguimiento">En seguimiento</button>
+              <button class="filter-pill" data-crm-filter="Interesado">Interesado</button>
+              <button class="filter-pill" data-crm-filter="Descartado">Descartado</button>
+            </div>
+            <div>
+              <button class="btn btn-secondary btn-sm" id="btnReloadCRM">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <span>Actualizar</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="clean-table" id="crmTable">
+              <thead>
+                <tr>
+                  <th>Score</th>
+                  <th>Tipo</th>
+                  <th>Título / Nombre</th>
+                  <th>Subtítulo / Empresa</th>
+                  <th>Estado CRM</th>
+                  <th>Notas</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="crmTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- TAB 6: SESSION MANAGER -->
+        <section class="tab-pane" id="session-tab">
+          <div class="card session-card">
+            <div class="session-card-header">
+              <div class="session-status-badge" id="sessionBadgeLarge">Verificando...</div>
+              <h3>Gestión de Autenticación de LinkedIn</h3>
+            </div>
+            <p class="session-desc">
+              Esta aplicación utiliza las cookies de tu sesión guardadas en <code class="code-inline">linkedin_session.json</code>.
+              Para poder extraer perfiles, publicaciones y empleos sin bloqueos, tu sesión debe estar activa.
+            </p>
+
+            <div class="session-details-box" id="sessionDetailsBox">
+              <div class="detail-row">
+                <span class="detail-name">Estado:</span>
+                <span class="detail-val" id="sessionStatusVal">Cargando...</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-name">Ruta del archivo:</span>
+                <span class="detail-val code-font" id="sessionPathVal">-</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-name">Cookies activas:</span>
+                <span class="detail-val" id="sessionCookiesVal">0</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-name">Última actualización:</span>
+                <span class="detail-val" id="sessionTimeVal">-</span>
+              </div>
+            </div>
+
+            <div class="session-actions">
+              <button class="btn btn-primary" id="btnLaunchLogin">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                <span>Iniciar Sesión en Navegador (1 Clic)</span>
+              </button>
+              <button class="btn btn-secondary" id="btnCheckSessionNow">
+                <span>Comprobar Estado</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="detailModal" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="badge-score" id="modalScoreBadge">85% Match</span>
+          <h3 id="modalTitle">Detalle del Lead</h3>
+        </div>
+        <button class="btn-close" id="btnCloseModal">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

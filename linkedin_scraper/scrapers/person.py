@@ -110,16 +110,63 @@ class PersonScraper(BaseScraper):
             raise ScrapingError(f"Failed to scrape person profile: {e}")
 
     async def _get_name_and_location(self) -> tuple[str, Optional[str]]:
-        """Extract name and location from profile."""
+        """Extract name and location from profile with robust fallbacks."""
+        name = ""
+        location = ""
         try:
-            name = await self.safe_extract_text("h1", default="Unknown")
-            location = await self.safe_extract_text(
-                ".text-body-small.inline.t-black--light.break-words", default=""
-            )
-            return name, location if location else None
+            # Try standard selectors
+            name_selectors = [
+                "h1.inline",
+                "h1.top-card-layout__title",
+                "h1",
+                "[data-anonymize='person-name']",
+                ".top-card__title"
+            ]
+            for sel in name_selectors:
+                txt = await self.safe_extract_text(sel, default="")
+                if txt and txt != "Unknown" and len(txt) > 1 and "LinkedIn" not in txt and "Sign In" not in txt:
+                    name = txt.strip()
+                    break
+
+            # Fallback to page title
+            if not name:
+                page_title = await self.page.title()
+                if page_title and "|" in page_title:
+                    clean_title = page_title.split("|")[0].strip()
+                    if "-" in clean_title:
+                        clean_title = clean_title.split("-")[0].strip()
+                    if clean_title and clean_title != "LinkedIn":
+                        name = clean_title
+
+            # Fallback to URL slug
+            if not name:
+                cur_url = self.page.url or ""
+                if "/in/" in cur_url:
+                    slug = cur_url.split("/in/")[1].split("/")[0].split("?")[0]
+                    # Remove trailing numeric ids
+                    import re
+                    clean_slug = re.sub(r'-[0-9a-fA-F]+$', '', slug)
+                    words = [w.capitalize() for w in clean_slug.split("-") if w and not w.isdigit()]
+                    if words:
+                        name = " ".join(words)
+
+            # Location extraction
+            loc_selectors = [
+                ".text-body-small.inline.t-black--light.break-words",
+                ".top-card__subline-item",
+                "[data-anonymize='location']",
+                ".profile-info-subheader"
+            ]
+            for sel in loc_selectors:
+                loc_txt = await self.safe_extract_text(sel, default="")
+                if loc_txt and len(loc_txt) > 2:
+                    location = loc_txt.strip()
+                    break
+
+            return name or "Usuario LinkedIn", location if location else None
         except Exception as e:
             logger.warning(f"Error getting name/location: {e}")
-            return "Unknown", None
+            return "Usuario LinkedIn", None
 
     async def _check_open_to_work(self) -> bool:
         """Check if profile has open to work badge."""
