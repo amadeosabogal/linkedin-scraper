@@ -426,4 +426,4 @@ async def send_email_endpoint(request: EmailRequest):
     if success:
         return {"status": "success", "message": message}
     else:
-        raise HTTPException(status_code=500, detail=message)
+        raise HTTPException(status_code=400, detail=message)
