@@ -37,6 +37,8 @@ def init_db():
                 crm_status TEXT DEFAULT 'Nuevo',  -- 'Nuevo', 'Contactado', 'En seguimiento', 'Interesado', 'Descartado'
                 notes TEXT DEFAULT '',
                 tags TEXT DEFAULT '',             -- Comma separated tags
+                phone TEXT DEFAULT '',
+                email TEXT DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -78,7 +80,9 @@ def save_or_update_lead(
     raw_data: Dict[str, Any],
     crm_status: str = "Nuevo",
     notes: str = "",
-    tags: str = ""
+    tags: str = "",
+    phone: str = "",
+    email: str = ""
 ) -> int:
     """Save or update a lead in the database."""
     init_db()
@@ -87,8 +91,8 @@ def save_or_update_lead(
         cursor.execute("""
             INSERT INTO leads (
                 item_type, linkedin_url, title, subtitle, location, 
-                score, score_breakdown, raw_data, crm_status, notes, tags, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                score, score_breakdown, raw_data, crm_status, notes, tags, phone, email, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(linkedin_url) DO UPDATE SET
                 title = excluded.title,
                 subtitle = excluded.subtitle,
@@ -108,7 +112,9 @@ def save_or_update_lead(
             json.dumps(raw_data, ensure_ascii=False),
             crm_status,
             notes,
-            tags
+            tags,
+            phone,
+            email
         ))
         conn.commit()
         return cursor.lastrowid
@@ -150,8 +156,8 @@ def get_all_leads(item_type: Optional[str] = None, crm_status: Optional[str] = N
         return leads
 
 
-def update_lead_status_or_notes(lead_id: int, crm_status: Optional[str] = None, notes: Optional[str] = None, tags: Optional[str] = None):
-    """Update CRM status, tags or notes for a lead."""
+def update_lead_status_or_notes(lead_id: int, crm_status: Optional[str] = None, notes: Optional[str] = None, tags: Optional[str] = None, phone: Optional[str] = None, email: Optional[str] = None):
+    """Update CRM status, tags, notes, phone or email for a lead."""
     init_db()
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -167,6 +173,12 @@ def update_lead_status_or_notes(lead_id: int, crm_status: Optional[str] = None, 
         if tags is not None:
             updates.append("tags = ?")
             params.append(tags)
+        if phone is not None:
+            updates.append("phone = ?")
+            params.append(phone)
+        if email is not None:
+            updates.append("email = ?")
+            params.append(email)
             
         if not updates:
             return

@@ -43,3 +43,10 @@ MANIFEST.ini
 # Basic package build artifacts
 build-basic/
 dist-basic/
+
+# Database
+*.db
+
+# Google Credentials
+credentials.json
+token.json

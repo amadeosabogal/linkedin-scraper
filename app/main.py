@@ -19,6 +19,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from app.services.email_service import email_service_instance
 
 from app.services.session_service import check_session_status, launch_manual_login
 from app.services.scraper_service import ScraperService
@@ -33,6 +34,13 @@ from app.services.db_service import (
 
 # Initialize DB
 init_db()
+
+
+class EmailRequest(BaseModel):
+    to_email: str
+    subject: str
+    body: str
+    is_html: bool = False
 
 app = FastAPI(
     title="LinkedIn Lead Hunter & Job Matcher",
@@ -105,6 +113,18 @@ class LeadUpdateStatusRequest(BaseModel):
     crm_status: Optional[str] = None
     notes: Optional[str] = None
     tags: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+
+class ManualLeadRequest(BaseModel):
+    title: str
+    subtitle: Optional[str] = ""
+    phone: Optional[str] = ""
+    email: Optional[str] = ""
+    crm_status: Optional[str] = "Nuevo"
+    notes: Optional[str] = ""
+    linkedin_url: Optional[str] = ""
+
 
 
 # --- Web Page Route ---
@@ -312,9 +332,38 @@ async def list_leads(item_type: Optional[str] = None, crm_status: Optional[str] 
 
 @app.patch("/api/leads/{lead_id}")
 async def update_lead(lead_id: int, req: LeadUpdateStatusRequest):
-    """Update lead CRM status, notes or tags."""
-    update_lead_status_or_notes(lead_id, crm_status=req.crm_status, notes=req.notes, tags=req.tags)
+    """Update lead CRM status, notes, tags, phone or email."""
+    update_lead_status_or_notes(
+        lead_id, 
+        crm_status=req.crm_status, 
+        notes=req.notes, 
+        tags=req.tags,
+        phone=req.phone,
+        email=req.email
+    )
     return {"success": True}
+
+@app.post("/api/leads")
+async def create_manual_lead(req: ManualLeadRequest):
+    """Add a lead manually."""
+    import uuid
+    url = req.linkedin_url if req.linkedin_url else f"manual_{uuid.uuid4().hex}"
+    lead_id = save_or_update_lead(
+        item_type="lead (manual)",
+        linkedin_url=url,
+        title=req.title,
+        subtitle=req.subtitle,
+        location="No especificada",
+        score=100,
+        score_breakdown={"notes": ["Añadido manualmente"]},
+        raw_data={},
+        crm_status=req.crm_status,
+        notes=req.notes,
+        phone=req.phone,
+        email=req.email
+    )
+    return {"success": True, "lead_id": lead_id}
+
 
 
 @app.delete("/api/leads/{lead_id}")
@@ -364,3 +413,17 @@ async def export_leads_csv(item_type: Optional[str] = None):
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=leads_linkedin_{item_type or 'all'}.csv"}
     )
+
+
+@app.post("/api/emails/send")
+async def send_email_endpoint(request: EmailRequest):
+    success, message = email_service_instance.send_email(
+        request.to_email,
+        request.subject,
+        request.body,
+        request.is_html
+    )
+    if success:
+        return {"status": "success", "message": message}
+    else:
+        raise HTTPException(status_code=500, detail=message)
